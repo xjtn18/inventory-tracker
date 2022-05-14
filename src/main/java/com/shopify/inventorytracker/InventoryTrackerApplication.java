@@ -1,26 +1,26 @@
 package com.shopify.inventorytracker;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.ApplicationContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import java.sql.SQLException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.shopify.inventorytracker.io.*;
+import com.shopify.inventorytracker.inventory.*;
 import com.shopify.inventorytracker.api.ApiHandler;
 import com.shopify.inventorytracker.model.Item;
-import com.shopify.inventorytracker.inventory.*;
 
 
 
 
 @SpringBootApplication
-//@ComponentScan("com.shopify.inventorytracker")
 public class InventoryTrackerApplication implements CommandLineRunner {
 	@Autowired private ApplicationContext context;
 	private ConsoleIO consoleIO;
@@ -41,7 +41,7 @@ public class InventoryTrackerApplication implements CommandLineRunner {
 
 			try {
 				// get user's selected option
-				int choice = consoleIO.promptForNumberInRange("\nEnter a number to select an option:", 0, 4);
+				int choice = consoleIO.promptForNumberInRange("\nEnter a number to select an option:", 0, 5);
 
 				switch (choice){
 					case 0: { // Quit
@@ -60,6 +60,7 @@ public class InventoryTrackerApplication implements CommandLineRunner {
 						String itemLocation = storageLocations[itemLocationNumber-1];
 
 						inventory.insert(itemName, itemLocation);
+
 						System.out.printf("\nSuccessfully added %s (%s) to inventory.\n", itemName, itemLocation);
 						break;
 
@@ -69,28 +70,45 @@ public class InventoryTrackerApplication implements CommandLineRunner {
 
 
 					} case 3: { // Remove from inventory
-						inventory.display(apiHandler); // display the inventory so user can see what they want to remove.
+						inventory.display(); // display the inventory so user can see what they want to remove.
 						Long itemId = new Long(-1);
 						inventory.delete(itemId);
 						Item removedItem;
-						while (true){
-							try {
-								itemId = consoleIO.promptForLong("\nEnter the ID of the item you want to remove:");
-								removedItem = inventory.select(itemId);
-								break;
 
-							} catch (NonExistantItemException nie){
-								consoleIO.log(nie.getMessage());
-							}
+						try {
+							itemId = consoleIO.promptForLong("\nEnter the ID of the item you want to remove:");
+							removedItem = inventory.select(itemId);
+							inventory.delete(itemId);
+							System.out.printf("\nSuccessfully removed %s (%s) from inventory.", removedItem.getName(), removedItem.getLocation());
+							break;
+
+						} catch (NonExistantItemException nie){
+							consoleIO.log("\n" + nie.getMessage());
 						}
-						inventory.delete(itemId);
-						System.out.printf("\nSuccessfully removed %s (%s) from inventory.", removedItem.getName(), removedItem.getLocation());
 						break;
 
 
 					} case 4: { // Print current inventory table to the console
-						inventory.display(apiHandler);
+						inventory.displayWithWeather(apiHandler);
 						consoleIO.promptForInput("\n[press 'Enter' to continue]");
+						break;
+
+
+					} case 5: { // Create a shipment
+						inventory.display(); // display the inventory so user can see what items they want to ship.
+
+						String itemIdStrings = consoleIO.promptForNonEmptyInput("\nEnter comma seperated list of IDs in the shipment:");
+						try {
+							List<Long> itemIds = Stream.of(itemIdStrings.split(","))
+								.map(String::trim)
+								.map(Long::parseLong)
+								.collect(Collectors.toList());
+							inventory.processShipment(new Shipment(itemIds));
+							System.out.printf("\nSuccessfully processed shipment.");
+
+						} catch (NumberFormatException nfe){
+							consoleIO.log("\nError: Invalid item ID provided in shipment.");
+						}
 						break;
 					}
 				}
@@ -106,8 +124,7 @@ public class InventoryTrackerApplication implements CommandLineRunner {
 				}
 
 			} catch (Exception e){
-				consoleIO.log("\nError: Unknown problem occurred.");
-				consoleIO.log(e.getMessage());
+				consoleIO.log("\nError: " + e.getMessage());
 			}
 
 		}

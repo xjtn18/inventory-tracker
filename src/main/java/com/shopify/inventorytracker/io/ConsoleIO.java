@@ -119,6 +119,7 @@ public class ConsoleIO {
 		log("[2] Edit item");
 		log("[3] Delete item");
 		log("[4] Display inventory");
+		log("[5] Create and process a shipment");
 	}
 
 

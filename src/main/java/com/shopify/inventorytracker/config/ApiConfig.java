@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 
 // Simple config class to store the injected OpenWeather API key from application.properties.
 @Configuration
-@PropertySource(value="classpath:application.properties", ignoreResourceNotFound=true)
+@PropertySource(value="classpath:application.properties")
 class WeatherApiConfig {
 
 	@Autowired

@@ -12,8 +12,8 @@ import javax.sql.DataSource;
 
 // Simple config class to store the injected database properties key from db.properties.
 @Configuration
-@PropertySource(value="classpath:db.properties", ignoreResourceNotFound=true)
-public class DBConfig {
+@PropertySource(value="classpath:db.properties")
+class DBConfig {
 
 	@Autowired
 	private Environment env;

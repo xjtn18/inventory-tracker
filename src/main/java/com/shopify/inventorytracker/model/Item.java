@@ -3,6 +3,9 @@ package com.shopify.inventorytracker.model;
 import java.util.Objects;
 
 
+/**
+ * Class to encapsulate the data from a row in the SQL 'stock' table.
+ */
 public class Item {
 
 	private Long id;
