@@ -16,6 +16,8 @@ import java.sql.SQLException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import java.sql.ResultSet;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,26 @@ public class Inventory {
 
 	// Methods
 
+
+	public boolean hasItem(final Long itemId){
+		String sql = "SELECT 1 FROM Stock WHERE id = ?";
+		return jdbcTemplate.query(
+			sql,
+			new PreparedStatementSetter(){
+				public void setValues(PreparedStatement ps) throws SQLException {
+					ps.setLong(1, itemId);
+				}
+			},
+			new ResultSetExtractor<Boolean>(){
+				public Boolean extractData(ResultSet rs) throws SQLException {
+					return rs.next();
+				}
+			}
+		);
+	}
+
+
+
 	public List<Item> selectAll(){
 		String sql = "SELECT * FROM Stock";
 		return jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(Item.class));
@@ -41,7 +63,7 @@ public class Inventory {
 
 
 
-	public Item select(final Long itemId) throws NonExistantItemException {
+	public Item select(final Long itemId) throws NonExistentItemException {
 		String sql = "SELECT * FROM Stock WHERE id=?";
 
 		try {
@@ -56,7 +78,7 @@ public class Inventory {
 			).get(0); // UID is primary key, resulting list should have 1 element
 
 		} catch (IndexOutOfBoundsException obe){ // the selection was empty, ID is invalid.
-			throw new NonExistantItemException("Error: Non-existant item ID was looked up.");
+			throw new NonExistentItemException("Attempted to select a non-existent item.");
 		}
 	}
 
@@ -78,25 +100,50 @@ public class Inventory {
 
 
 
+	public void update(final Long itemId, final String newItemName, final String newItemLocation){
+		String sql = "UPDATE Stock SET name = ?, location = ? where id = ?";
+
+		if (jdbcTemplate.update(
+			sql,
+			new PreparedStatementSetter(){
+				public void setValues(PreparedStatement ps) throws SQLException {
+					ps.setString(1, newItemName);
+					ps.setString(2, newItemLocation);
+					ps.setLong(3, itemId);
+				}
+			}
+		) == 0){
+			throw new NonExistentItemException("Attempted to update a non-existent item.");
+		}
+	}
+
+
+
 	public void delete(final Long itemId){
 		String sql = "DELETE FROM Stock WHERE id=?";
 
-		jdbcTemplate.update(
+		if (jdbcTemplate.update(
 			sql,
 			new PreparedStatementSetter(){
 				public void setValues(PreparedStatement ps) throws SQLException {
 					ps.setLong(1, itemId);
 				}
 			}
-		);
+		) == 0){
+			throw new NonExistentItemException("Attempted to remove a non-existent item.");
+		}
 	}
 
 
 
 	public void processShipment(Shipment shipment){
 		String sql;
-		for (Long itemId : shipment.getItemIdList()){
-			this.delete(itemId);
+		for (Long itemId : shipment.getItemIdSet()){
+			try {
+				this.delete(itemId);
+			} catch (NonExistentItemException nie){
+				System.out.printf("\nError: Could not ship item %d; item does not exist.\n", itemId);
+			}
 		}
 	}
 

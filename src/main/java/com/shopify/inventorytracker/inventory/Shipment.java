@@ -3,6 +3,8 @@ package com.shopify.inventorytracker.inventory;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 
 
@@ -14,28 +16,28 @@ import java.util.ArrayList;
 public class Shipment {
 
 	// Attributes
-	private List<Long> itemIdList;
+	private Set<Long> itemIdSet;
 
 
 	// Methods
 
 	// Default constructor
 	public Shipment(){
-		itemIdList = new ArrayList<Long>();
+		itemIdSet = new HashSet<Long>();
 	}
 
 	// Constructor that takes preset item id list
-	public Shipment(List<Long> idList){
-		itemIdList = idList;
+	public Shipment(Set<Long> idSet){
+		itemIdSet = idSet;
 	}
 
 
 	public void assign(Long itemId){
-		itemIdList.add(itemId);
+		itemIdSet.add(itemId);
 	}
 
-	public List<Long> getItemIdList(){
-		return itemIdList;
+	public Set<Long> getItemIdSet(){
+		return itemIdSet;
 	}
 
 

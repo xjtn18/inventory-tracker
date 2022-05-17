@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -26,6 +27,8 @@ public class InventoryTrackerApplication implements CommandLineRunner {
 	private ConsoleIO consoleIO;
 	private ApiHandler apiHandler;
 	private Inventory inventory;
+	// 5 hard coded storage locations
+	private final String[] storageLocations = new String[]{"Las Vegas", "Ottawa", "New York", "London", "Singapore"};
 
 
 	/**
@@ -52,10 +55,8 @@ public class InventoryTrackerApplication implements CommandLineRunner {
 
 					} case 1: { // Add to inventory
 						String itemName = consoleIO.promptForNonEmptyInput("\nEnter the item name:");
-						// 5 hard coded storage locations
-						String[] storageLocations = new String[]{"Las Vegas", "Ottawa", "New York", "London", "Singapore"};
 
-						consoleIO.printLocationOptions(storageLocations);
+						consoleIO.printAsMenu(storageLocations);
 						int itemLocationNumber = consoleIO.promptForNumberInRange("\nEnter a number to select a location:", 1, 5);
 						String itemLocation = storageLocations[itemLocationNumber-1];
 
@@ -66,49 +67,47 @@ public class InventoryTrackerApplication implements CommandLineRunner {
 
 
 					} case 2: { // Edit inventory
+						inventory.display(); // display the inventory so user can see what items they want to edit.
+
+						Long itemId = consoleIO.promptForLong("\nEnter the ID of the item you want to edit:");
+						String newItemName = consoleIO.promptForNonEmptyInput("\nEnter the new name for item " + String.valueOf(itemId) + ":");
+
+						consoleIO.printAsMenu(storageLocations);
+						int newItemLocationNumber = consoleIO.promptForNumberInRange("\nEnter a number to select a new location:", 1, 5);
+
+						inventory.update(itemId, newItemName, storageLocations[newItemLocationNumber-1]);
+
+						System.out.printf("\nSuccessfully updated item %d in inventory.\n", itemId);
 						break;
 
 
 					} case 3: { // Remove from inventory
 						inventory.display(); // display the inventory so user can see what they want to remove.
-						Long itemId = new Long(-1);
+						Long itemId = consoleIO.promptForLong("\nEnter the ID of the item you want to remove:");
+
 						inventory.delete(itemId);
-						Item removedItem;
 
-						try {
-							itemId = consoleIO.promptForLong("\nEnter the ID of the item you want to remove:");
-							removedItem = inventory.select(itemId);
-							inventory.delete(itemId);
-							System.out.printf("\nSuccessfully removed %s (%s) from inventory.", removedItem.getName(), removedItem.getLocation());
-							break;
-
-						} catch (NonExistantItemException nie){
-							consoleIO.log("\n" + nie.getMessage());
-						}
+						System.out.printf("\nSuccessfully removed item %d from inventory.\n", itemId);
 						break;
 
 
-					} case 4: { // Print current inventory table to the console
+					} case 4: { // Create a shipment
+						inventory.display(); // display the inventory so user can see what items they want to ship.
+						String itemIdStrings = consoleIO.promptForNonEmptyInput("\nEnter comma seperated list of IDs in the shipment:");
+
+						Set<Long> itemIds = Stream.of(itemIdStrings.split(","))
+							.map(String::trim)
+							.map(Long::parseLong)
+							.collect(Collectors.toSet());
+						inventory.processShipment(new Shipment(itemIds));
+						System.out.println("\nFinished processing shipment.");
+
+						break;
+
+
+					} case 5: { // Print current inventory table to the console
 						inventory.displayWithWeather(apiHandler);
 						consoleIO.promptForInput("\n[press 'Enter' to continue]");
-						break;
-
-
-					} case 5: { // Create a shipment
-						inventory.display(); // display the inventory so user can see what items they want to ship.
-
-						String itemIdStrings = consoleIO.promptForNonEmptyInput("\nEnter comma seperated list of IDs in the shipment:");
-						try {
-							List<Long> itemIds = Stream.of(itemIdStrings.split(","))
-								.map(String::trim)
-								.map(Long::parseLong)
-								.collect(Collectors.toList());
-							inventory.processShipment(new Shipment(itemIds));
-							System.out.printf("\nSuccessfully processed shipment.");
-
-						} catch (NumberFormatException nfe){
-							consoleIO.log("\nError: Invalid item ID provided in shipment.");
-						}
 						break;
 					}
 				}
@@ -122,6 +121,12 @@ public class InventoryTrackerApplication implements CommandLineRunner {
 				} else {
 					consoleIO.log("\nError: Unknown network error.");
 				}
+
+			} catch (NonExistentItemException nie){
+				consoleIO.log("\nError: " + nie.getMessage());
+
+			} catch (NumberFormatException nfe){
+				consoleIO.log("\nError: Invalid item ID provided in shipment.");
 
 			} catch (Exception e){
 				consoleIO.log("\nError: " + e.getMessage());

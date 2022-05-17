@@ -50,7 +50,7 @@ public class ConsoleIO {
 	public String promptForNonEmptyInput(String prompt){
 		String input;
 		while ((input = promptForInput(prompt)).equals("")){
-			log("\nError: Please provide a non-empty string.");
+			log("\nError: Input was empty.");
 		}
 		return input;
 	}
@@ -77,7 +77,7 @@ public class ConsoleIO {
 					break;
 				}
 			} catch (NumberFormatException nfe){
-				log("\nError: Please enter a valid number.");
+				log("\nError: Please enter a number.");
 			}
 		}
 
@@ -118,13 +118,13 @@ public class ConsoleIO {
 		log("[1] Add item");
 		log("[2] Edit item");
 		log("[3] Delete item");
-		log("[4] Display inventory");
-		log("[5] Create and process a shipment");
+		log("[4] Create and process a shipment");
+		log("[5] Display inventory");
 	}
 
 
 
-	public void printLocationOptions(String[] options){
+	public void printAsMenu(String[] options){
 		log("");
 		for (int i = 0; i < options.length; ++i){
 			log("[" + (i+1) + "] " + options[i]);
