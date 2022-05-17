@@ -115,10 +115,10 @@ public class ConsoleIO {
 	public void printMainMenu(){
 		log("\n\n-------------------- Menu --------------------");
 		log("[0] << Quit");
-		log("[1] Add item");
-		log("[2] Edit item");
-		log("[3] Delete item");
-		log("[4] Create and process a shipment");
+		log("[1] Add an item");
+		log("[2] Edit an item");
+		log("[3] Remove an item");
+		log("[4] Process a shipment");
 		log("[5] Display inventory");
 	}
 
