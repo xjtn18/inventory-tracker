@@ -26,5 +26,5 @@ Using a terminal, navigate to the root directory of the project and enter the fo
 2. Ensure that you have an SQL server running locally on the default port 3306.
 3. Using a terminal, navigate to the root directory of the project and enter the following command to start the demo:
 > make run
-	- Entering the following alternate command will reset the inventory database table to a default table as specified in 'src/main/resources/init-db.sql' before starting the demo:
-	> make run db=reset
+4. Alternatively, entering the following command will reset the inventory database table to a default table as specified in 'src/main/resources/init-db.sql' before starting the demo:
+> make run db=reset
