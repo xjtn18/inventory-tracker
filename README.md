@@ -1,7 +1,7 @@
 # Inventory Tracker
 ## A Java Springboot inventory tracking program with an interactive command line demo.
 
-[Here](https://streamable.com/e/2lmkb6) is a video demonstration of the program in action.
+[Click here](https://streamable.com/e/2lmkb6) to watch a video demonstration of the program in action.
 
 ---
 ### Tools needed
